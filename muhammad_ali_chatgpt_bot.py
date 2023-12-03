@@ -23,27 +23,34 @@ def classify_user_input(utterance, conversation_history):
     classified_category = extract_category(classification_response['choices'][0]['text'])
     return classified_category
 
-# Function to generate a response based on the classified category using the second API call
+# Function to generate a response based on the classified category using the Chat API
 def generate_response(classified_category, user_utterance, conversation_history):
     # Update the conversation history with the latest user input
     conversation_history.append(user_utterance)
 
+    # Build the conversation input for the Chat API
+    chat_input = [{'role': 'system', 'content': 'You are a helpful assistant that knows about Muhammad Ali.'}]
+    for i, utterance in enumerate(conversation_history):
+        role = 'user' if i % 2 == 0 else 'assistant'
+        chat_input.append({'role': role, 'content': utterance})
+
+    #Append the current message to chat_input with additional ontext depending on what classified_category is so we can get back relevant responses
     if classified_category == "Muhammad Ali":
-        response_prompt = f"Conversation History: {conversation_history}\nGenerate a response to the user's inquiry about Muhammad Ali. User's utterance: '{user_utterance}'."
+        chat_input.append({'role': 'user', 'content': user_utterance + " Generate a response to the user's inquiry about Muhammad Ali."})
     elif classified_category == "Maybe related":
-        response_prompt = f"Conversation History: {conversation_history}\nThe user's utterance is most likely about someone related to Muhammad Ali, give back an appropriate response on information that relates to their relationship with Muhammad Ali. User's utterance: '{user_utterance}'"
+        chat_input.append({'role': 'user', 'content': user_utterance + " The user's utterance is most likely about someone related to Muhammad Ali, give back an appropriate response on information that relates to their relationship with Muhammad Ali."})
     else:
-        response_prompt = f"Conversation History: {conversation_history}\nGenerate an appropriate response to the user's {classified_category} utterance making sure to let them know that this is a bot about Muhammad Ali. User's utterance: '{user_utterance}'."
+        chat_input.append({'role': 'user', 'content': user_utterance + f" Generate an appropriate response to the user's {classified_category} utterance making sure to let them know that this is a bot about Muhammad Ali."})
     
-    response_generation_response = openai.Completion.create(
-        engine="text-davinci-003",  
-        prompt=response_prompt,
+    # Call the Chat API
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=chat_input,
         temperature=0.8,
         max_tokens=150
     )
 
-    return response_generation_response['choices'][0]['text']
-
+    return response['choices'][0]['message']['content']
 # Function to extract the category from the classification API response
 def extract_category(api_response):
     # Check if the response matches the expected format
