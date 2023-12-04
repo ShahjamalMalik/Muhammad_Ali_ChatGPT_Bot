@@ -3,7 +3,7 @@ from discord.ext import commands
 import openai
 import os
 from dotenv import load_dotenv
-import muhammad_ali_chatgpt_bot as muhammad_ali_bot_utils
+import muhammad_ali_chatgpt_bot
 
 # Load environment variables from .env file
 load_dotenv()
@@ -12,9 +12,6 @@ load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_KEY")
 
-# Load the spaCy English model
-# Note: You can remove this line if you don't need it in the Discord bot
-# nlp = spacy.load("en_core_web_sm")
 
 # Define the intents
 intents = discord.Intents.default()
@@ -46,9 +43,9 @@ async def on_message(message):
         conversation_histories[user_id] = []
 
     # Classify user input using the OpenAI API with conversation history
-    classified_category = muhammad_ali_bot_utils.classify_user_input(message.content, conversation_histories[user_id])
+    classified_category = muhammad_ali_chatgpt_bot.classify_user_input(message.content)
     # Generate a response based on the classified category using the OpenAI API
-    bot_response = muhammad_ali_bot_utils.generate_response(classified_category, message.content, conversation_histories[user_id])
+    bot_response = muhammad_ali_chatgpt_bot.generate_response(classified_category, message.content, conversation_histories[user_id])
     # Send the generated response to the Discord channel
     await message.channel.send(bot_response)
 
